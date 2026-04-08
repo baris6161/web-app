@@ -38,6 +38,7 @@ export default function DashboardClient() {
   const [fMarke, setFMarke] = useState("");
   const [fModell, setFModell] = useState("");
   const [fPreis, setFPreis] = useState("");
+  const [filterOpen, setFilterOpen] = useState(false);
 
   const load = useCallback(async () => {
     setLoadErr("");
@@ -181,71 +182,100 @@ export default function DashboardClient() {
 
       {loadErr ? <p className="err">{loadErr}</p> : null}
 
-      <div className="card treffer-filter-card">
-        <p style={{ margin: "0 0 0.65rem", fontWeight: 600 }}>Suche &amp; Filter</p>
-        <p className="treffer-meta" style={{ marginBottom: "0.65rem" }}>
-          Marke/Modell: erstes Wort = Marke (heuristisch). Preis: Ziffern reichen
-          (z.&nbsp;B. 13500).
-        </p>
-        <div className="filter-grid">
-          <label className="filter-field">
-            <span>Marke</span>
-            <input
-              type="search"
-              enterKeyHint="search"
-              value={fMarke}
-              onChange={(e) => setFMarke(e.target.value)}
-              placeholder="z. B. VW"
-              autoComplete="off"
-            />
-          </label>
-          <label className="filter-field">
-            <span>Modell</span>
-            <input
-              type="search"
-              enterKeyHint="search"
-              value={fModell}
-              onChange={(e) => setFModell(e.target.value)}
-              placeholder="z. B. Polo"
-              autoComplete="off"
-            />
-          </label>
-          <label className="filter-field">
-            <span>Preis</span>
-            <input
-              type="search"
-              enterKeyHint="search"
-              value={fPreis}
-              onChange={(e) => setFPreis(e.target.value)}
-              placeholder="z. B. 13500"
-              inputMode="numeric"
-              autoComplete="off"
-            />
-          </label>
-        </div>
-        <div className="filter-footer">
-          {treffer.length > 0 ? (
-            <span className="treffer-meta">
-              {filterActive
-                ? `${filtered.length} von ${treffer.length} Inseraten`
-                : `${treffer.length} Inserate`}
-            </span>
-          ) : (
-            <span className="treffer-meta">—</span>
-          )}
-          {filterActive ? (
-            <button
-              type="button"
-              className="btn-pill btn-ghost btn-compact"
-              onClick={() => {
-                setFMarke("");
-                setFModell("");
-                setFPreis("");
-              }}
+      <div className="filter-section-gap">
+        <div className="card treffer-filter-card filter-collapsible-card">
+          <button
+            type="button"
+            className="filter-disclosure-trigger"
+            onClick={() => setFilterOpen((o) => !o)}
+            aria-expanded={filterOpen}
+            aria-controls="filter-panel"
+            id="filter-disclosure-btn"
+          >
+            <span
+              className={`filter-disclosure-chevron${filterOpen ? " is-open" : ""}`}
+              aria-hidden
             >
-              Filter zurücksetzen
-            </button>
-          ) : null}
+              ▶
+            </span>
+            <span className="filter-disclosure-title">Suche &amp; Filter</span>
+            {filterActive ? (
+              <span className="badge filter-disclosure-badge">aktiv</span>
+            ) : null}
+          </button>
+          <div
+            id="filter-panel"
+            role="region"
+            aria-labelledby="filter-disclosure-btn"
+            className={`filter-disclosure-panel${filterOpen ? " is-open" : ""}`}
+          >
+            <div className="filter-disclosure-inner">
+              <p className="treffer-meta" style={{ margin: "0 0 0.65rem" }}>
+                Marke/Modell: erstes Wort = Marke (heuristisch). Preis: Ziffern
+                reichen (z.&nbsp;B. 13500).
+              </p>
+              <div className="filter-grid">
+                <label className="filter-field">
+                  <span>Marke</span>
+                  <input
+                    type="search"
+                    enterKeyHint="search"
+                    value={fMarke}
+                    onChange={(e) => setFMarke(e.target.value)}
+                    placeholder="z. B. VW"
+                    autoComplete="off"
+                  />
+                </label>
+                <label className="filter-field">
+                  <span>Modell</span>
+                  <input
+                    type="search"
+                    enterKeyHint="search"
+                    value={fModell}
+                    onChange={(e) => setFModell(e.target.value)}
+                    placeholder="z. B. Polo"
+                    autoComplete="off"
+                  />
+                </label>
+                <label className="filter-field">
+                  <span>Preis</span>
+                  <input
+                    type="search"
+                    enterKeyHint="search"
+                    value={fPreis}
+                    onChange={(e) => setFPreis(e.target.value)}
+                    placeholder="z. B. 13500"
+                    inputMode="numeric"
+                    autoComplete="off"
+                  />
+                </label>
+              </div>
+              <div className="filter-footer">
+                {treffer.length > 0 ? (
+                  <span className="treffer-meta">
+                    {filterActive
+                      ? `${filtered.length} von ${treffer.length} Inseraten`
+                      : `${treffer.length} Inserate`}
+                  </span>
+                ) : (
+                  <span className="treffer-meta">—</span>
+                )}
+                {filterActive ? (
+                  <button
+                    type="button"
+                    className="btn-pill btn-ghost btn-compact"
+                    onClick={() => {
+                      setFMarke("");
+                      setFModell("");
+                      setFPreis("");
+                    }}
+                  >
+                    Filter zurücksetzen
+                  </button>
+                ) : null}
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 

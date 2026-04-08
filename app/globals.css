@@ -199,6 +199,92 @@ input {
   color: var(--text-muted);
 }
 
+.filter-section-gap {
+  margin-top: 1.25rem;
+}
+
+.filter-collapsible-card {
+  padding: 0;
+  overflow: hidden;
+}
+
+.filter-disclosure-trigger {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1rem 1.25rem;
+  margin: 0;
+  border: none;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-weight: 600;
+  font-size: 1rem;
+  text-align: left;
+  cursor: pointer;
+  border-radius: var(--radius-card);
+  transition: background 0.2s ease;
+}
+
+.filter-disclosure-trigger:hover {
+  background: var(--bg-elevated);
+}
+
+.filter-disclosure-chevron {
+  display: inline-flex;
+  flex-shrink: 0;
+  width: 1.25rem;
+  justify-content: center;
+  font-size: 0.65rem;
+  line-height: 1;
+  color: var(--text-muted);
+  transform: rotate(0deg);
+  transition: transform 0.3s ease;
+}
+
+.filter-disclosure-chevron.is-open {
+  transform: rotate(90deg);
+}
+
+.filter-disclosure-title {
+  flex: 1;
+}
+
+.filter-disclosure-badge {
+  flex-shrink: 0;
+}
+
+.filter-disclosure-panel {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.35s ease;
+}
+
+.filter-disclosure-panel.is-open {
+  grid-template-rows: 1fr;
+}
+
+.filter-disclosure-inner {
+  min-height: 0;
+  overflow: hidden;
+  padding: 0 1.25rem 1.25rem;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+
+.filter-disclosure-panel.is-open .filter-disclosure-inner {
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .filter-disclosure-panel,
+  .filter-disclosure-inner,
+  .filter-disclosure-chevron {
+    transition: none;
+  }
+}
+
 h1 {
   font-size: 1.5rem;
   font-weight: 700;
