@@ -36,6 +36,20 @@ function formatDe(iso: string | null) {
   }
 }
 
+function statusFromApiJson(sj: Record<string, unknown>): StatusPayload {
+  const rawOn = sj.nohandOn;
+  return {
+    last_seen_at: (sj.last_seen_at as string | null) ?? null,
+    pcOnline: Boolean(sj.pcOnline),
+    nohandOn:
+      typeof rawOn === "boolean"
+        ? rawOn
+        : rawOn == null
+          ? null
+          : Boolean(rawOn),
+  };
+}
+
 export default function DashboardClient() {
   const router = useRouter();
   const [treffer, setTreffer] = useState<TrefferRow[]>([]);
@@ -52,6 +66,23 @@ export default function DashboardClient() {
   const [logLoading, setLogLoading] = useState(false);
   const [logErr, setLogErr] = useState("");
   const nohandSwitchRef = useRef<HTMLInputElement>(null);
+
+  const refreshStatus = useCallback(async (): Promise<StatusPayload | null> => {
+    try {
+      const st = await fetch("/api/status", { credentials: "include" });
+      if (st.status === 401) {
+        router.push("/login");
+        return null;
+      }
+      if (!st.ok) return null;
+      const sj = (await st.json()) as Record<string, unknown>;
+      const payload = statusFromApiJson(sj);
+      setStatus(payload);
+      return payload;
+    } catch {
+      return null;
+    }
+  }, [router]);
 
   const load = useCallback(async () => {
     setLoadErr("");
@@ -71,17 +102,8 @@ export default function DashboardClient() {
       const tj = await tr.json();
       setTreffer((tj.treffer as TrefferRow[]) || []);
       if (st.ok) {
-        const sj = await st.json();
-        setStatus({
-          last_seen_at: sj.last_seen_at ?? null,
-          pcOnline: Boolean(sj.pcOnline),
-          nohandOn:
-            typeof sj.nohandOn === "boolean"
-              ? sj.nohandOn
-              : sj.nohandOn == null
-                ? null
-                : Boolean(sj.nohandOn),
-        });
+        const sj = (await st.json()) as Record<string, unknown>;
+        setStatus(statusFromApiJson(sj));
       }
     } catch {
       setLoadErr("Netzwerkfehler beim Laden.");
@@ -129,6 +151,7 @@ export default function DashboardClient() {
   async function cmd(action: "on" | "off") {
     setMsg("");
     setBusy(true);
+    const wantOn = action === "on";
     try {
       const r = await fetch("/api/nohand", {
         method: "POST",
@@ -141,7 +164,29 @@ export default function DashboardClient() {
         setMsg((j as { error?: string }).error || "Befehl fehlgeschlagen.");
         return;
       }
-      setMsg(action === "on" ? "No-Hand AN angefordert." : "No-Hand AUS angefordert.");
+      setMsg(
+        wantOn
+          ? "No-Hand AN — warte auf Bestätigung vom PC …"
+          : "No-Hand AUS — warte auf Bestätigung vom PC …"
+      );
+      const deadline = Date.now() + 30_000;
+      const pause = () => new Promise((res) => setTimeout(res, 450));
+      let matched = false;
+      while (Date.now() < deadline) {
+        const s = await refreshStatus();
+        if (s && s.nohandOn === wantOn) {
+          matched = true;
+          break;
+        }
+        await pause();
+      }
+      if (matched) {
+        setMsg(wantOn ? "No-Hand ist an." : "No-Hand ist aus.");
+      } else {
+        setMsg(
+          "Befehl gesendet; der PC meldet den neuen Status noch nicht — bitte Aktualisieren oder später erneut prüfen."
+        );
+      }
       await load();
     } catch {
       setMsg("Netzwerkfehler.");
