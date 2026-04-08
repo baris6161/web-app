@@ -13,7 +13,7 @@ export async function GET(req: NextRequest) {
     const sb = supabaseAdmin();
     const { data, error } = await sb
       .from("nohand_web_heartbeat")
-      .select("last_seen_at")
+      .select("last_seen_at, nohand_on")
       .eq("singleton", "pc")
       .maybeSingle();
     if (error) {
@@ -27,9 +27,18 @@ export async function GET(req: NextRequest) {
         pcOnline = (Date.now() - t) / 1000 < STALE_SEC;
       }
     }
+    const rawOn = data?.nohand_on;
+    const nohandOn =
+      typeof rawOn === "boolean"
+        ? rawOn
+        : rawOn === null || rawOn === undefined
+          ? null
+          : Boolean(rawOn);
+
     return NextResponse.json({
       last_seen_at: raw ?? null,
       pcOnline,
+      nohandOn,
     });
   } catch (e) {
     const m = e instanceof Error ? e.message : "Fehler";

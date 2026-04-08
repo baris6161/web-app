@@ -4,7 +4,8 @@ Dark, mobile-first Oberfläche: Inserate aus Supabase, PC-Status, No-Hand an/aus
 
 ## Voraussetzungen
 
-1. **Supabase:** SQL aus `docs/supabase/nohand_web_schema.sql` im SQL Editor ausführen.
+1. **Supabase:** SQL aus `docs/supabase/nohand_web_schema.sql` im SQL Editor ausführen.  
+   **Bestehende Projekte:** zusätzlich `docs/supabase/nohand_web_migration_status_toggle.sql` ausführen (Spalte `nohand_on` + Tabelle `nohand_web_status_log`).
 2. **Umgebungsvariablen** (lokal: `.env`, auf Vercel: Project Settings → Environment Variables):
 
 | Variable | Beschreibung |

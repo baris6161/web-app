@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { TrefferRow } from "@/lib/treffer-types";
 import {
@@ -14,6 +14,14 @@ export type { TrefferRow };
 type StatusPayload = {
   last_seen_at: string | null;
   pcOnline: boolean;
+  nohandOn: boolean | null;
+};
+
+type StatusLogEntry = {
+  id: string;
+  created_at: string;
+  title: string | null;
+  body: string | null;
 };
 
 function formatDe(iso: string | null) {
@@ -39,6 +47,11 @@ export default function DashboardClient() {
   const [fModell, setFModell] = useState("");
   const [fPreis, setFPreis] = useState("");
   const [filterOpen, setFilterOpen] = useState(false);
+  const [logOpen, setLogOpen] = useState(false);
+  const [logEntries, setLogEntries] = useState<StatusLogEntry[]>([]);
+  const [logLoading, setLogLoading] = useState(false);
+  const [logErr, setLogErr] = useState("");
+  const nohandSwitchRef = useRef<HTMLInputElement>(null);
 
   const load = useCallback(async () => {
     setLoadErr("");
@@ -59,7 +72,16 @@ export default function DashboardClient() {
       setTreffer((tj.treffer as TrefferRow[]) || []);
       if (st.ok) {
         const sj = await st.json();
-        setStatus(sj as StatusPayload);
+        setStatus({
+          last_seen_at: sj.last_seen_at ?? null,
+          pcOnline: Boolean(sj.pcOnline),
+          nohandOn:
+            typeof sj.nohandOn === "boolean"
+              ? sj.nohandOn
+              : sj.nohandOn == null
+                ? null
+                : Boolean(sj.nohandOn),
+        });
       }
     } catch {
       setLoadErr("Netzwerkfehler beim Laden.");
@@ -69,6 +91,20 @@ export default function DashboardClient() {
   useEffect(() => {
     load();
   }, [load]);
+
+  useEffect(() => {
+    if (!logOpen) return;
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") setLogOpen(false);
+    }
+    window.addEventListener("keydown", onKey);
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      document.body.style.overflow = prev;
+    };
+  }, [logOpen]);
 
   const filterObj = useMemo(
     () => ({ marke: fMarke, modell: fModell, preis: fPreis }),
@@ -99,10 +135,32 @@ export default function DashboardClient() {
         return;
       }
       setMsg(action === "on" ? "No-Hand AN angefordert." : "No-Hand AUS angefordert.");
+      await load();
     } catch {
       setMsg("Netzwerkfehler.");
     } finally {
       setBusy(false);
+    }
+  }
+
+  async function openStatusLog() {
+    setLogErr("");
+    setLogLoading(true);
+    setLogOpen(true);
+    try {
+      const r = await fetch("/api/status-log", { credentials: "include" });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok) {
+        setLogErr((j as { error?: string }).error || "Log konnte nicht geladen werden.");
+        setLogEntries([]);
+        return;
+      }
+      setLogEntries((j.entries as StatusLogEntry[]) || []);
+    } catch {
+      setLogErr("Netzwerkfehler.");
+      setLogEntries([]);
+    } finally {
+      setLogLoading(false);
     }
   }
 
@@ -117,6 +175,14 @@ export default function DashboardClient() {
     ? "PC offline oder Sync aus — No-Hand bis der PC wieder verbunden ist."
     : undefined;
 
+  useEffect(() => {
+    const el = nohandSwitchRef.current;
+    if (!el) return;
+    el.indeterminate = pcOk && status?.nohandOn === null;
+  }, [pcOk, status?.nohandOn]);
+
+  const nohandChecked = status?.nohandOn === true;
+
   return (
     <div className="shell shell-wide shell-dashboard">
       <header className="dash-topbar">
@@ -126,6 +192,23 @@ export default function DashboardClient() {
             <span className={pcOk ? "badge ok" : "badge"}>
               {pcOk ? "PC verbunden" : "PC getrennt"}
             </span>
+            {pcOk ? (
+              <>
+                {status?.nohandOn === true ? (
+                  <span className="badge ok" style={{ marginLeft: 6 }}>
+                    No-Hand an
+                  </span>
+                ) : status?.nohandOn === false ? (
+                  <span className="badge" style={{ marginLeft: 6 }}>
+                    No-Hand aus
+                  </span>
+                ) : (
+                  <span className="badge" style={{ marginLeft: 6 }}>
+                    No-Hand ?
+                  </span>
+                )}
+              </>
+            ) : null}
             {status?.last_seen_at ? (
               <span className="dash-subline-time">
                 {" "}
@@ -144,26 +227,43 @@ export default function DashboardClient() {
         </button>
       </header>
 
-      <div className="dash-toolbar" role="toolbar" aria-label="Aktionen">
-        <div className="dash-toolbar-scroll">
-          <button
-            type="button"
-            className="btn-pill btn-success btn-toolbar"
-            disabled={busy || !pcOk}
-            title={pcHint}
-            onClick={() => cmd("on")}
-          >
-            No-Hand an
-          </button>
-          <button
-            type="button"
-            className="btn-pill btn-danger btn-toolbar"
-            disabled={busy || !pcOk}
-            title={pcHint}
-            onClick={() => cmd("off")}
-          >
-            No-Hand aus
-          </button>
+      <div className="dash-toolbar dash-toolbar-combo" role="toolbar" aria-label="Aktionen">
+        <div className="nohand-toggle-row">
+          <span className="nohand-toggle-label" id="nohand-switch-label">
+            No-Hand Modus
+          </span>
+          <label className="nohand-switch" title={pcHint}>
+            <input
+              ref={nohandSwitchRef}
+              type="checkbox"
+              role="switch"
+              aria-checked={
+                !pcOk
+                  ? false
+                  : status?.nohandOn === null
+                    ? "mixed"
+                    : nohandChecked
+              }
+              aria-labelledby="nohand-switch-label"
+              checked={nohandChecked}
+              disabled={busy || !pcOk}
+              onChange={(e) => cmd(e.target.checked ? "on" : "off")}
+            />
+            <span className="nohand-switch-slider" aria-hidden />
+          </label>
+          <span className="nohand-toggle-hint" aria-live="polite">
+            {busy
+              ? "…"
+              : !pcOk
+                ? "—"
+                : status?.nohandOn === null
+                  ? "?"
+                  : nohandChecked
+                    ? "AN"
+                    : "AUS"}
+          </span>
+        </div>
+        <div className="dash-toolbar-actions">
           <button
             type="button"
             className="btn-pill btn-ghost btn-toolbar"
@@ -171,6 +271,15 @@ export default function DashboardClient() {
             onClick={() => load()}
           >
             Aktualisieren
+          </button>
+          <button
+            type="button"
+            className="btn-pill btn-ghost btn-toolbar btn-log-icon"
+            title="Status-Log (wie Discord-Webhook)"
+            aria-label="Status-Log öffnen"
+            onClick={() => openStatusLog()}
+          >
+            L
           </button>
         </div>
       </div>
@@ -352,6 +461,65 @@ export default function DashboardClient() {
           </table>
         </div>
       )}
+
+      {logOpen ? (
+        <div
+          className="log-modal-backdrop"
+          role="presentation"
+          onClick={() => setLogOpen(false)}
+        >
+          <div
+            className="log-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="log-modal-title"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <header className="log-modal-header">
+              <div>
+                <h2 id="log-modal-title">Status-Log</h2>
+                <p className="treffer-meta log-modal-sub">
+                  Spiegel der Meldungen an deinen No-Hand-Status-Webhook (vom PC
+                  mitgeschrieben).
+                </p>
+              </div>
+              <button
+                type="button"
+                className="log-modal-close"
+                aria-label="Schließen"
+                onClick={() => setLogOpen(false)}
+              >
+                ✕
+              </button>
+            </header>
+            <div className="log-modal-scroll">
+              {logLoading ? (
+                <p className="treffer-meta">Laden …</p>
+              ) : logErr ? (
+                <p className="err">{logErr}</p>
+              ) : logEntries.length === 0 ? (
+                <p className="treffer-meta">Noch keine Einträge.</p>
+              ) : (
+                <ul className="log-modal-list">
+                  {logEntries.map((ent) => (
+                    <li key={ent.id} className="log-modal-item">
+                      <div className="log-modal-time">
+                        {formatDe(ent.created_at)}
+                      </div>
+                      <div className="log-modal-entry-title">
+                        {ent.title || "—"}
+                      </div>
+                      {ent.body ? (
+                        <pre className="log-modal-pre">{ent.body}</pre>
+                      ) : null}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }
