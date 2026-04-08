@@ -362,10 +362,6 @@ export default function DashboardClient() {
             className={`filter-disclosure-panel${filterOpen ? " is-open" : ""}`}
           >
             <div className="filter-disclosure-inner">
-              <p className="treffer-meta" style={{ margin: "0 0 0.65rem" }}>
-                Marke/Modell: erstes Wort = Marke (heuristisch). Preis: Ziffern
-                reichen (z.&nbsp;B. 13500).
-              </p>
               <div className="filter-grid">
                 <label className="filter-field">
                   <span>Marke</span>
