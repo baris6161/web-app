@@ -244,26 +244,8 @@ export default function DashboardClient() {
             <span className={pcOk ? "badge ok" : "badge"}>
               {pcOk ? "PC verbunden" : "PC getrennt"}
             </span>
-            {pcOk ? (
-              <>
-                {status?.nohandOn === true ? (
-                  <span className="badge ok" style={{ marginLeft: 6 }}>
-                    No-Hand an
-                  </span>
-                ) : status?.nohandOn === false ? (
-                  <span className="badge" style={{ marginLeft: 6 }}>
-                    No-Hand aus
-                  </span>
-                ) : (
-                  <span className="badge" style={{ marginLeft: 6 }}>
-                    No-Hand ?
-                  </span>
-                )}
-              </>
-            ) : null}
             {status?.last_seen_at ? (
               <span className="dash-subline-time">
-                {" "}
                 · zuletzt {formatDe(status.last_seen_at)}
               </span>
             ) : null}
@@ -280,60 +262,69 @@ export default function DashboardClient() {
       </header>
 
       <div className="dash-toolbar dash-toolbar-combo" role="toolbar" aria-label="Aktionen">
-        <div className="nohand-toggle-row">
-          <span className="nohand-toggle-label" id="nohand-switch-label">
-            No-Hand Modus
-          </span>
-          <label className="nohand-switch" title={pcHint}>
-            <input
-              ref={nohandSwitchRef}
-              type="checkbox"
-              role="switch"
-              aria-checked={
-                !pcOk
-                  ? false
-                  : status?.nohandOn === null
-                    ? "mixed"
-                    : nohandChecked
-              }
-              aria-labelledby="nohand-switch-label"
-              checked={nohandChecked}
-              disabled={busy || !pcOk}
-              onChange={(e) => cmd(e.target.checked ? "on" : "off")}
-            />
-            <span className="nohand-switch-slider" aria-hidden />
-          </label>
-          <span className="nohand-toggle-hint" aria-live="polite">
-            {busy
-              ? "…"
-              : !pcOk
-                ? "—"
+        <span className="nh-toolbar-label" id="nohand-switch-label">
+          NH-Modus
+        </span>
+        <label className="nohand-switch" title={pcHint}>
+          <input
+            ref={nohandSwitchRef}
+            type="checkbox"
+            role="switch"
+            aria-checked={
+              !pcOk
+                ? false
                 : status?.nohandOn === null
-                  ? "?"
+                  ? "mixed"
                   : nohandChecked
-                    ? "AN"
-                    : "AUS"}
-          </span>
-        </div>
-        <div className="dash-toolbar-actions">
-          <button
-            type="button"
-            className="btn-pill btn-ghost btn-toolbar"
-            disabled={busy}
-            onClick={() => load()}
-          >
-            Aktualisieren
-          </button>
-          <button
-            type="button"
-            className="btn-pill btn-ghost btn-toolbar btn-log-icon"
-            title="Status-Log (wie Discord-Webhook)"
-            aria-label="Status-Log öffnen"
-            onClick={() => openStatusLog()}
-          >
-            L
-          </button>
-        </div>
+            }
+            aria-labelledby="nohand-switch-label"
+            checked={nohandChecked}
+            disabled={busy || !pcOk}
+            onChange={(e) => cmd(e.target.checked ? "on" : "off")}
+          />
+          <span className="nohand-switch-slider" aria-hidden />
+        </label>
+        <span
+          className={
+            busy
+              ? "nh-mode-status nh-mode-status-busy"
+              : !pcOk
+                ? "nh-mode-status nh-mode-status-muted"
+                : status?.nohandOn === null
+                  ? "nh-mode-status nh-mode-status-muted"
+                  : nohandChecked
+                    ? "nh-mode-status nh-mode-status-on"
+                    : "nh-mode-status nh-mode-status-off"
+          }
+          aria-live="polite"
+        >
+          {busy
+            ? "…"
+            : !pcOk
+              ? "—"
+              : status?.nohandOn === null
+                ? "?"
+                : nohandChecked
+                  ? "AN"
+                  : "AUS"}
+        </span>
+        <button
+          type="button"
+          className="btn-pill btn-ghost btn-toolbar nh-toolbar-btn"
+          disabled={busy}
+          onClick={() => load()}
+        >
+          Aktualisieren
+        </button>
+        <button
+          type="button"
+          className="btn-pill btn-ghost btn-toolbar btn-log-icon nh-toolbar-btn"
+          title="Status-Log"
+          aria-label="Status-Log öffnen"
+          onClick={() => openStatusLog()}
+        >
+          L
+        </button>
       </div>
       {msg ? (
         <p className="dash-flash" role="status">
@@ -449,7 +440,6 @@ export default function DashboardClient() {
           <table className="treffer-table">
             <thead>
               <tr>
-                <th>Zeit</th>
                 <th>Marke</th>
                 <th>Modell</th>
                 <th>Preis</th>
@@ -457,6 +447,7 @@ export default function DashboardClient() {
                 <th>Vgl.</th>
                 <th>Inserat</th>
                 <th>Vergleich</th>
+                <th className="th-time-end">Zeit</th>
               </tr>
             </thead>
             <tbody>
@@ -465,7 +456,6 @@ export default function DashboardClient() {
                 const plat = inferPlatform(t.inserat_url, t.vergleich_url);
                 return (
                   <tr key={t.id}>
-                    <td className="td-time">{formatDe(t.created_at)}</td>
                     <td>
                       {marke}
                       {t.schnaeppchen ? (
@@ -506,6 +496,7 @@ export default function DashboardClient() {
                         "—"
                       )}
                     </td>
+                    <td className="td-time td-time-end">{formatDe(t.created_at)}</td>
                   </tr>
                 );
               })}
