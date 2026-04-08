@@ -37,8 +37,7 @@ export default function LoginPage() {
   return (
     <div className="login-wrap">
       <div className="login-card">
-        <h1>Angeschriebene Inserate</h1>
-        <p className="sub">Anmelden</p>
+        <h1>Login</h1>
         <form onSubmit={onSubmit}>
           <div className="field">
             <label htmlFor="u">Benutzername</label>

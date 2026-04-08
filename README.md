@@ -15,6 +15,7 @@ Dark, mobile-first Oberfläche: Inserate aus Supabase, PC-Status, No-Hand an/aus
 | `DASHBOARD_PASSWORD_HASH` | bcrypt-Hash des Passworts (empfohlen, z. B. Vercel) |
 | `DASHBOARD_PASSWORD` | optional nur lokal: Klartext (nie committen) |
 | `SESSION_SECRET` | Geheimnis für JWT-Session (mind. 32 Zeichen in Prod.) |
+| `DASHBOARD_DEMO_TREFFER` | optional `1` oder `true`: blendet 3 Demo-Zeilen ein (nur UI-Test; in Prod. wieder aus) |
 
 Passwort-Hash lokal erzeugen (im Ordner `web/nohand-dashboard` nach `npm install`):
 
