@@ -93,6 +93,13 @@ export default function DashboardClient() {
   }, [load]);
 
   useEffect(() => {
+    const t = window.setInterval(() => {
+      load();
+    }, 12000);
+    return () => window.clearInterval(t);
+  }, [load]);
+
+  useEffect(() => {
     if (!logOpen) return;
     function onKey(e: KeyboardEvent) {
       if (e.key === "Escape") setLogOpen(false);
