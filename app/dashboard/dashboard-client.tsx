@@ -73,13 +73,13 @@ export default function DashboardClient() {
   const [status, setStatus] = useState<StatusPayload | null>(null);
   const [nohandMeta, setNohandMeta] = useState<SourceMeta>({
     page: 1,
-    pageSize: 40,
+    pageSize: 100,
     total: 0,
     totalPages: 1,
   });
   const [manualMeta, setManualMeta] = useState<SourceMeta>({
     page: 1,
-    pageSize: 40,
+    pageSize: 100,
     total: 0,
     totalPages: 1,
   });

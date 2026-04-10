@@ -11,7 +11,7 @@ export async function GET(req: NextRequest) {
     const u = new URL(req.url);
     const page = Math.max(1, Number(u.searchParams.get("page") || "1"));
     const pageSize = Math.min(
-      100,
+      200,
       Math.max(10, Number(u.searchParams.get("pageSize") || "50"))
     );
     const from = (page - 1) * pageSize;
