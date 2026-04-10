@@ -438,6 +438,12 @@ input {
   background: rgba(0, 82, 255, 0.08);
 }
 
+.table-visibility-row {
+  display: flex;
+  justify-content: flex-end;
+  margin: 0 0 0.35rem;
+}
+
 .filter-section-gap {
   margin-top: 0.65rem;
 }

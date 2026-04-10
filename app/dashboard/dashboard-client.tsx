@@ -55,6 +55,10 @@ export default function DashboardClient() {
   const [nohandTreffer, setNohandTreffer] = useState<TrefferRow[]>([]);
   const [manualTreffer, setManualTreffer] = useState<ManualTrefferRow[]>([]);
   const [activeTab, setActiveTab] = useState<"nohand" | "manual">("nohand");
+  const [collapsed, setCollapsed] = useState<{ nohand: boolean; manual: boolean }>({
+    nohand: false,
+    manual: false,
+  });
   const [status, setStatus] = useState<StatusPayload | null>(null);
   const [msg, setMsg] = useState("");
   const [busy, setBusy] = useState(false);
@@ -252,6 +256,7 @@ export default function DashboardClient() {
   }, [pcOk, status?.nohandOn]);
 
   const nohandChecked = status?.nohandOn === true;
+  const activeCollapsed = activeTab === "nohand" ? collapsed.nohand : collapsed.manual;
 
   return (
     <div className="shell shell-wide shell-dashboard">
@@ -364,6 +369,20 @@ export default function DashboardClient() {
           Manuell ({manualTreffer.length})
         </button>
       </div>
+      <div className="table-visibility-row">
+        <button
+          type="button"
+          className="btn-pill btn-ghost btn-toolbar"
+          onClick={() =>
+            setCollapsed((prev) => ({
+              ...prev,
+              [activeTab]: !prev[activeTab],
+            }))
+          }
+        >
+          {activeCollapsed ? "Aufklappen" : "Einklappen"}
+        </button>
+      </div>
       {msg ? (
         <p className="dash-flash" role="status">
           {msg}
@@ -372,35 +391,39 @@ export default function DashboardClient() {
 
       {loadErr ? <p className="err">{loadErr}</p> : null}
 
-      <div className="filter-section-gap">
-        <div className="card treffer-filter-card filter-collapsible-card">
-          <button
-            type="button"
-            className="filter-disclosure-trigger"
-            onClick={() => setFilterOpen((o) => !o)}
-            aria-expanded={filterOpen}
-            aria-controls="filter-panel"
-            id="filter-disclosure-btn"
-          >
-            <span
-              className={`filter-disclosure-chevron${filterOpen ? " is-open" : ""}`}
-              aria-hidden
-            >
-              ▶
-            </span>
-            <span className="filter-disclosure-title">Suche &amp; Filter</span>
-            {filterActive ? (
-              <span className="badge filter-disclosure-badge">aktiv</span>
-            ) : null}
-          </button>
-          <div
-            id="filter-panel"
-            role="region"
-            aria-labelledby="filter-disclosure-btn"
-            className={`filter-disclosure-panel${filterOpen ? " is-open" : ""}`}
-          >
-            <div className="filter-disclosure-inner">
-              <div className="filter-grid">
+      {activeCollapsed ? (
+        <p className="sub">Tabelle eingeklappt.</p>
+      ) : (
+        <>
+          <div className="filter-section-gap">
+            <div className="card treffer-filter-card filter-collapsible-card">
+              <button
+                type="button"
+                className="filter-disclosure-trigger"
+                onClick={() => setFilterOpen((o) => !o)}
+                aria-expanded={filterOpen}
+                aria-controls="filter-panel"
+                id="filter-disclosure-btn"
+              >
+                <span
+                  className={`filter-disclosure-chevron${filterOpen ? " is-open" : ""}`}
+                  aria-hidden
+                >
+                  ▶
+                </span>
+                <span className="filter-disclosure-title">Suche &amp; Filter</span>
+                {filterActive ? (
+                  <span className="badge filter-disclosure-badge">aktiv</span>
+                ) : null}
+              </button>
+              <div
+                id="filter-panel"
+                role="region"
+                aria-labelledby="filter-disclosure-btn"
+                className={`filter-disclosure-panel${filterOpen ? " is-open" : ""}`}
+              >
+                <div className="filter-disclosure-inner">
+                  <div className="filter-grid">
                 <label className="filter-field">
                   <span>Marke</span>
                   <input
@@ -448,138 +471,139 @@ export default function DashboardClient() {
                   />
                 </label>
               </div>
-              <div className="filter-footer">
-                {(activeTab === "nohand" ? nohandTreffer.length : manualTreffer.length) >
-                0 ? (
-                  <span className="treffer-meta">
-                    {filterActive
-                      ? `${
-                          activeTab === "nohand"
-                            ? nohandFiltered.length
-                            : manualFiltered.length
-                        } von ${
-                          activeTab === "nohand"
-                            ? nohandTreffer.length
-                            : manualTreffer.length
-                        } Inseraten`
-                      : `${
-                          activeTab === "nohand"
-                            ? nohandTreffer.length
-                            : manualTreffer.length
-                        } Inserate`}
-                  </span>
-                ) : (
-                  <span className="treffer-meta">—</span>
-                )}
-                {filterActive ? (
-                  <button
-                    type="button"
-                    className="btn-pill btn-ghost btn-compact"
-                    onClick={() => {
-                      if (activeTab === "nohand") {
-                        setFNMarke("");
-                        setFNModell("");
-                        setFNPreis("");
-                      } else {
-                        setFMMarke("");
-                        setFMModell("");
-                        setFMPreis("");
-                      }
-                    }}
-                  >
-                    Filter zurücksetzen
-                  </button>
-                ) : null}
+                  <div className="filter-footer">
+                    {(activeTab === "nohand" ? nohandTreffer.length : manualTreffer.length) >
+                    0 ? (
+                      <span className="treffer-meta">
+                        {filterActive
+                          ? `${
+                              activeTab === "nohand"
+                                ? nohandFiltered.length
+                                : manualFiltered.length
+                            } von ${
+                              activeTab === "nohand"
+                                ? nohandTreffer.length
+                                : manualTreffer.length
+                            } Inseraten`
+                          : `${
+                              activeTab === "nohand"
+                                ? nohandTreffer.length
+                                : manualTreffer.length
+                            } Inserate`}
+                      </span>
+                    ) : (
+                      <span className="treffer-meta">—</span>
+                    )}
+                    {filterActive ? (
+                      <button
+                        type="button"
+                        className="btn-pill btn-ghost btn-compact"
+                        onClick={() => {
+                          if (activeTab === "nohand") {
+                            setFNMarke("");
+                            setFNModell("");
+                            setFNPreis("");
+                          } else {
+                            setFMMarke("");
+                            setFMModell("");
+                            setFMPreis("");
+                          }
+                        }}
+                      >
+                        Filter zurücksetzen
+                      </button>
+                    ) : null}
+                  </div>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      </div>
-
-      {(activeTab === "nohand" ? nohandTreffer.length : manualTreffer.length) === 0 ? (
-        <p className="sub">Noch keine Inserate vom PC.</p>
-      ) : (activeTab === "nohand" ? nohandFiltered.length : manualFiltered.length) ===
-        0 ? (
-        <p className="sub">Keine Inserate für diese Filter.</p>
-      ) : (
-        <div className="treffer-table-wrap">
-          <table className="treffer-table">
-            <thead>
-              <tr>
-                <th>Marke</th>
-                <th>Modell</th>
-                <th>Preis</th>
-                <th>Plattform</th>
-                <th>Vgl.</th>
-                {activeTab === "nohand" ? <th>Inserat</th> : null}
-                <th>Vergleich</th>
-                <th className="th-time-end">Zeit</th>
-              </tr>
-            </thead>
-            <tbody>
-              {(activeTab === "nohand" ? nohandFiltered : manualFiltered).map((t) => {
-                const { marke, modell } = splitMarkeModell(t.marke_modell);
-                const plat =
-                  activeTab === "manual" &&
-                  "platform" in t &&
-                  typeof t.platform === "string" &&
-                  t.platform.trim()
-                    ? t.platform
-                    : inferPlatform(
-                        "inserat_url" in t ? t.inserat_url : null,
-                        t.vergleich_url
-                      );
-                return (
-                  <tr key={t.id}>
-                    <td>
-                      {marke}
-                      {"schnaeppchen" in t && t.schnaeppchen ? (
-                        <span className="badge badge-inline">Schnäppchen</span>
-                      ) : null}
-                    </td>
-                    <td>{modell}</td>
-                    <td className="td-nowrap">{t.angebot_preis_text || "—"}</td>
-                    <td>{plat}</td>
-                    <td className="td-center">
-                      {t.hits != null ? `${t.hits}/5` : "—"}
-                    </td>
-                    {activeTab === "nohand" ? (
-                      <td className="td-actions">
-                        {"inserat_url" in t && t.inserat_url ? (
-                          <a
-                            href={t.inserat_url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="btn-pill btn-primary btn-table"
-                          >
-                            Inserat
-                          </a>
-                        ) : (
-                          "—"
-                        )}
-                      </td>
-                    ) : null}
-                    <td className="td-actions">
-                      {t.vergleich_url ? (
-                        <a
-                          href={t.vergleich_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="btn-pill btn-ghost btn-table"
-                        >
-                          Vergleich
-                        </a>
-                      ) : (
-                        "—"
-                      )}
-                    </td>
-                    <td className="td-time td-time-end">{formatDe(t.created_at)}</td>
+          {(activeTab === "nohand" ? nohandTreffer.length : manualTreffer.length) === 0 ? (
+            <p className="sub">Noch keine Inserate vom PC.</p>
+          ) : (activeTab === "nohand" ? nohandFiltered.length : manualFiltered.length) ===
+            0 ? (
+            <p className="sub">Keine Inserate für diese Filter.</p>
+          ) : (
+            <div className="treffer-table-wrap">
+              <table className="treffer-table">
+                <thead>
+                  <tr>
+                    <th>Marke</th>
+                    <th>Modell</th>
+                    <th>Preis</th>
+                    <th>Plattform</th>
+                    <th>Vgl.</th>
+                    {activeTab === "nohand" ? <th>Inserat</th> : null}
+                    <th>Vergleich</th>
+                    <th className="th-time-end">Zeit</th>
                   </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+                </thead>
+                <tbody>
+                  {(activeTab === "nohand" ? nohandFiltered : manualFiltered).map((t) => {
+                    const { marke, modell } = splitMarkeModell(t.marke_modell);
+                    const plat =
+                      activeTab === "manual" &&
+                      "platform" in t &&
+                      typeof t.platform === "string" &&
+                      t.platform.trim()
+                        ? t.platform
+                        : inferPlatform(
+                            "inserat_url" in t ? t.inserat_url : null,
+                            t.vergleich_url
+                          );
+                    return (
+                      <tr key={t.id}>
+                        <td>
+                          {marke}
+                          {"schnaeppchen" in t && t.schnaeppchen ? (
+                            <span className="badge badge-inline">Schnäppchen</span>
+                          ) : null}
+                        </td>
+                        <td>{modell}</td>
+                        <td className="td-nowrap">{t.angebot_preis_text || "—"}</td>
+                        <td>{plat}</td>
+                        <td className="td-center">
+                          {t.hits != null ? `${t.hits}/5` : "—"}
+                        </td>
+                        {activeTab === "nohand" ? (
+                          <td className="td-actions">
+                            {"inserat_url" in t && t.inserat_url ? (
+                              <a
+                                href={t.inserat_url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="btn-pill btn-primary btn-table"
+                              >
+                                Inserat
+                              </a>
+                            ) : (
+                              "—"
+                            )}
+                          </td>
+                        ) : null}
+                        <td className="td-actions">
+                          {t.vergleich_url ? (
+                            <a
+                              href={t.vergleich_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="btn-pill btn-ghost btn-table"
+                            >
+                              Vergleich
+                            </a>
+                          ) : (
+                            "—"
+                          )}
+                        </td>
+                        <td className="td-time td-time-end">{formatDe(t.created_at)}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </>
       )}
 
       {logOpen ? (
