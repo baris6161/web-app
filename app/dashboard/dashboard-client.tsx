@@ -442,25 +442,6 @@ export default function DashboardClient() {
           L
         </button>
       </div>
-      <div className="source-filter-row">
-        <span className="source-filter-label">Quellen</span>
-        <label className="source-filter-chip">
-          <input
-            type="checkbox"
-            checked={showNohand}
-            onChange={(e) => setShowNohand(e.target.checked)}
-          />
-          <span>No-Hand</span>
-        </label>
-        <label className="source-filter-chip">
-          <input
-            type="checkbox"
-            checked={showManual}
-            onChange={(e) => setShowManual(e.target.checked)}
-          />
-          <span>Manuell</span>
-        </label>
-      </div>
       {msg ? (
         <p className="dash-flash" role="status">
           {msg}
@@ -498,22 +479,26 @@ export default function DashboardClient() {
               <div className="filter-grid">
                 <label className="filter-field">
                   <span>Quellen</span>
-                  <div className="source-filter-row inside-filter">
-                    <label className="source-filter-chip">
-                      <input
-                        type="checkbox"
-                        checked={showNohand}
-                        onChange={(e) => setShowNohand(e.target.checked)}
-                      />
-                      <span>No-Hand</span>
+                  <div className="source-toggle-grid">
+                    <label className="source-toggle-item">
+                      <span className="source-toggle-title">No-Hand</span>
+                      <span className="source-filter-chip">
+                        <input
+                          type="checkbox"
+                          checked={showNohand}
+                          onChange={(e) => setShowNohand(e.target.checked)}
+                        />
+                      </span>
                     </label>
-                    <label className="source-filter-chip">
-                      <input
-                        type="checkbox"
-                        checked={showManual}
-                        onChange={(e) => setShowManual(e.target.checked)}
-                      />
-                      <span>Manuell</span>
+                    <label className="source-toggle-item">
+                      <span className="source-toggle-title">Manuell</span>
+                      <span className="source-filter-chip">
+                        <input
+                          type="checkbox"
+                          checked={showManual}
+                          onChange={(e) => setShowManual(e.target.checked)}
+                        />
+                      </span>
                     </label>
                   </div>
                 </label>

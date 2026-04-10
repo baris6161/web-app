@@ -422,9 +422,6 @@ input {
   gap: 0.45rem;
   margin: 0.2rem 0 0.55rem;
 }
-.source-filter-row.inside-filter {
-  margin: 0;
-}
 
 .source-filter-label {
   font-size: 0.78rem;
@@ -435,13 +432,39 @@ input {
 .source-filter-chip {
   display: inline-flex;
   align-items: center;
-  gap: 0.35rem;
-  padding: 0.35rem 0.6rem;
+  justify-content: center;
+  min-width: 48px;
+  min-height: 34px;
+  padding: 0.2rem 0.45rem;
   border: 1px solid var(--border);
-  border-radius: 999px;
+  border-radius: 10px;
   font-size: 0.78rem;
   color: var(--text);
   background: transparent;
+}
+
+.source-filter-chip input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+}
+
+.source-toggle-grid {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-top: 0.35rem;
+}
+
+.source-toggle-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.28rem;
+}
+
+.source-toggle-title {
+  font-size: 0.74rem;
+  color: var(--text-muted);
+  font-weight: 600;
 }
 
 .table-section {
