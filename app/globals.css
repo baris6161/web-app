@@ -415,6 +415,29 @@ input {
   color: var(--text-muted);
 }
 
+.dash-tabs {
+  display: inline-flex;
+  gap: 0.4rem;
+  margin: 0.2rem 0 0.55rem;
+}
+
+.dash-tab {
+  min-height: 36px;
+  padding: 0 0.75rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-muted);
+  font-weight: 600;
+  font-size: 0.78rem;
+}
+
+.dash-tab.is-active {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: rgba(0, 82, 255, 0.08);
+}
+
 .filter-section-gap {
   margin-top: 0.65rem;
 }

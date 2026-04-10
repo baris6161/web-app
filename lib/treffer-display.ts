@@ -37,7 +37,7 @@ export function digitsOnly(s: string): string {
 }
 
 export function rowMatchesFilters(
-  row: TrefferRow,
+  row: Pick<TrefferRow, "marke_modell" | "angebot_preis_text">,
   f: { marke: string; modell: string; preis: string }
 ): boolean {
   const mm = splitMarkeModell(row.marke_modell);

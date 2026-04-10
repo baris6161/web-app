@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import type { TrefferRow } from "@/lib/treffer-types";
+import type { ManualTrefferRow, TrefferRow } from "@/lib/treffer-types";
 import {
   inferPlatform,
   rowMatchesFilters,
@@ -52,14 +52,19 @@ function statusFromApiJson(sj: Record<string, unknown>): StatusPayload {
 
 export default function DashboardClient() {
   const router = useRouter();
-  const [treffer, setTreffer] = useState<TrefferRow[]>([]);
+  const [nohandTreffer, setNohandTreffer] = useState<TrefferRow[]>([]);
+  const [manualTreffer, setManualTreffer] = useState<ManualTrefferRow[]>([]);
+  const [activeTab, setActiveTab] = useState<"nohand" | "manual">("nohand");
   const [status, setStatus] = useState<StatusPayload | null>(null);
   const [msg, setMsg] = useState("");
   const [busy, setBusy] = useState(false);
   const [loadErr, setLoadErr] = useState("");
-  const [fMarke, setFMarke] = useState("");
-  const [fModell, setFModell] = useState("");
-  const [fPreis, setFPreis] = useState("");
+  const [fNMarke, setFNMarke] = useState("");
+  const [fNModell, setFNModell] = useState("");
+  const [fNPreis, setFNPreis] = useState("");
+  const [fMMarke, setFMMarke] = useState("");
+  const [fMModell, setFMModell] = useState("");
+  const [fMPreis, setFMPreis] = useState("");
   const [filterOpen, setFilterOpen] = useState(false);
   const [logOpen, setLogOpen] = useState(false);
   const [logEntries, setLogEntries] = useState<StatusLogEntry[]>([]);
@@ -87,20 +92,22 @@ export default function DashboardClient() {
   const load = useCallback(async () => {
     setLoadErr("");
     try {
-      const [tr, st] = await Promise.all([
+      const [tr, mt, st] = await Promise.all([
         fetch("/api/treffer", { credentials: "include" }),
+        fetch("/api/manual-treffer", { credentials: "include" }),
         fetch("/api/status", { credentials: "include" }),
       ]);
       if (tr.status === 401) {
         router.push("/login");
         return;
       }
-      if (!tr.ok) {
+      if (!tr.ok || !mt.ok) {
         setLoadErr("Inserate-Liste konnte nicht geladen werden.");
         return;
       }
-      const tj = await tr.json();
-      setTreffer((tj.treffer as TrefferRow[]) || []);
+      const [tj, mj] = await Promise.all([tr.json(), mt.json()]);
+      setNohandTreffer((tj.treffer as TrefferRow[]) || []);
+      setManualTreffer((mj.treffer as ManualTrefferRow[]) || []);
       if (st.ok) {
         const sj = (await st.json()) as Record<string, unknown>;
         setStatus(statusFromApiJson(sj));
@@ -135,18 +142,29 @@ export default function DashboardClient() {
     };
   }, [logOpen]);
 
-  const filterObj = useMemo(
-    () => ({ marke: fMarke, modell: fModell, preis: fPreis }),
-    [fMarke, fModell, fPreis]
+  const nohandFilterObj = useMemo(
+    () => ({ marke: fNMarke, modell: fNModell, preis: fNPreis }),
+    [fNMarke, fNModell, fNPreis]
   );
 
-  const filtered = useMemo(
-    () => treffer.filter((t) => rowMatchesFilters(t, filterObj)),
-    [treffer, filterObj]
+  const manualFilterObj = useMemo(
+    () => ({ marke: fMMarke, modell: fMModell, preis: fMPreis }),
+    [fMMarke, fMModell, fMPreis]
+  );
+
+  const nohandFiltered = useMemo(
+    () => nohandTreffer.filter((t) => rowMatchesFilters(t, nohandFilterObj)),
+    [nohandTreffer, nohandFilterObj]
+  );
+  const manualFiltered = useMemo(
+    () => manualTreffer.filter((t) => rowMatchesFilters(t, manualFilterObj)),
+    [manualTreffer, manualFilterObj]
   );
 
   const filterActive =
-    fMarke.trim() !== "" || fModell.trim() !== "" || fPreis.trim() !== "";
+    activeTab === "nohand"
+      ? fNMarke.trim() !== "" || fNModell.trim() !== "" || fNPreis.trim() !== ""
+      : fMMarke.trim() !== "" || fMModell.trim() !== "" || fMPreis.trim() !== "";
 
   async function cmd(action: "on" | "off") {
     setMsg("");
@@ -326,6 +344,26 @@ export default function DashboardClient() {
           L
         </button>
       </div>
+      <div className="dash-tabs" role="tablist" aria-label="Trefferbereiche">
+        <button
+          type="button"
+          className={`dash-tab${activeTab === "nohand" ? " is-active" : ""}`}
+          role="tab"
+          aria-selected={activeTab === "nohand"}
+          onClick={() => setActiveTab("nohand")}
+        >
+          No-Hand ({nohandTreffer.length})
+        </button>
+        <button
+          type="button"
+          className={`dash-tab${activeTab === "manual" ? " is-active" : ""}`}
+          role="tab"
+          aria-selected={activeTab === "manual"}
+          onClick={() => setActiveTab("manual")}
+        >
+          Manuell ({manualTreffer.length})
+        </button>
+      </div>
       {msg ? (
         <p className="dash-flash" role="status">
           {msg}
@@ -368,8 +406,12 @@ export default function DashboardClient() {
                   <input
                     type="search"
                     enterKeyHint="search"
-                    value={fMarke}
-                    onChange={(e) => setFMarke(e.target.value)}
+                    value={activeTab === "nohand" ? fNMarke : fMMarke}
+                    onChange={(e) =>
+                      activeTab === "nohand"
+                        ? setFNMarke(e.target.value)
+                        : setFMMarke(e.target.value)
+                    }
                     placeholder="z. B. VW"
                     autoComplete="off"
                   />
@@ -379,8 +421,12 @@ export default function DashboardClient() {
                   <input
                     type="search"
                     enterKeyHint="search"
-                    value={fModell}
-                    onChange={(e) => setFModell(e.target.value)}
+                    value={activeTab === "nohand" ? fNModell : fMModell}
+                    onChange={(e) =>
+                      activeTab === "nohand"
+                        ? setFNModell(e.target.value)
+                        : setFMModell(e.target.value)
+                    }
                     placeholder="z. B. Polo"
                     autoComplete="off"
                   />
@@ -390,8 +436,12 @@ export default function DashboardClient() {
                   <input
                     type="search"
                     enterKeyHint="search"
-                    value={fPreis}
-                    onChange={(e) => setFPreis(e.target.value)}
+                    value={activeTab === "nohand" ? fNPreis : fMPreis}
+                    onChange={(e) =>
+                      activeTab === "nohand"
+                        ? setFNPreis(e.target.value)
+                        : setFMPreis(e.target.value)
+                    }
                     placeholder="z. B. 13500"
                     inputMode="numeric"
                     autoComplete="off"
@@ -399,11 +449,24 @@ export default function DashboardClient() {
                 </label>
               </div>
               <div className="filter-footer">
-                {treffer.length > 0 ? (
+                {(activeTab === "nohand" ? nohandTreffer.length : manualTreffer.length) >
+                0 ? (
                   <span className="treffer-meta">
                     {filterActive
-                      ? `${filtered.length} von ${treffer.length} Inseraten`
-                      : `${treffer.length} Inserate`}
+                      ? `${
+                          activeTab === "nohand"
+                            ? nohandFiltered.length
+                            : manualFiltered.length
+                        } von ${
+                          activeTab === "nohand"
+                            ? nohandTreffer.length
+                            : manualTreffer.length
+                        } Inseraten`
+                      : `${
+                          activeTab === "nohand"
+                            ? nohandTreffer.length
+                            : manualTreffer.length
+                        } Inserate`}
                   </span>
                 ) : (
                   <span className="treffer-meta">—</span>
@@ -413,9 +476,15 @@ export default function DashboardClient() {
                     type="button"
                     className="btn-pill btn-ghost btn-compact"
                     onClick={() => {
-                      setFMarke("");
-                      setFModell("");
-                      setFPreis("");
+                      if (activeTab === "nohand") {
+                        setFNMarke("");
+                        setFNModell("");
+                        setFNPreis("");
+                      } else {
+                        setFMMarke("");
+                        setFMModell("");
+                        setFMPreis("");
+                      }
                     }}
                   >
                     Filter zurücksetzen
@@ -427,9 +496,10 @@ export default function DashboardClient() {
         </div>
       </div>
 
-      {treffer.length === 0 ? (
+      {(activeTab === "nohand" ? nohandTreffer.length : manualTreffer.length) === 0 ? (
         <p className="sub">Noch keine Inserate vom PC.</p>
-      ) : filtered.length === 0 ? (
+      ) : (activeTab === "nohand" ? nohandFiltered.length : manualFiltered.length) ===
+        0 ? (
         <p className="sub">Keine Inserate für diese Filter.</p>
       ) : (
         <div className="treffer-table-wrap">
@@ -441,20 +511,29 @@ export default function DashboardClient() {
                 <th>Preis</th>
                 <th>Plattform</th>
                 <th>Vgl.</th>
-                <th>Inserat</th>
+                {activeTab === "nohand" ? <th>Inserat</th> : null}
                 <th>Vergleich</th>
                 <th className="th-time-end">Zeit</th>
               </tr>
             </thead>
             <tbody>
-              {filtered.map((t) => {
+              {(activeTab === "nohand" ? nohandFiltered : manualFiltered).map((t) => {
                 const { marke, modell } = splitMarkeModell(t.marke_modell);
-                const plat = inferPlatform(t.inserat_url, t.vergleich_url);
+                const plat =
+                  activeTab === "manual" &&
+                  "platform" in t &&
+                  typeof t.platform === "string" &&
+                  t.platform.trim()
+                    ? t.platform
+                    : inferPlatform(
+                        "inserat_url" in t ? t.inserat_url : null,
+                        t.vergleich_url
+                      );
                 return (
                   <tr key={t.id}>
                     <td>
                       {marke}
-                      {t.schnaeppchen ? (
+                      {"schnaeppchen" in t && t.schnaeppchen ? (
                         <span className="badge badge-inline">Schnäppchen</span>
                       ) : null}
                     </td>
@@ -464,20 +543,22 @@ export default function DashboardClient() {
                     <td className="td-center">
                       {t.hits != null ? `${t.hits}/5` : "—"}
                     </td>
-                    <td className="td-actions">
-                      {t.inserat_url ? (
-                        <a
-                          href={t.inserat_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="btn-pill btn-primary btn-table"
-                        >
-                          Inserat
-                        </a>
-                      ) : (
-                        "—"
-                      )}
-                    </td>
+                    {activeTab === "nohand" ? (
+                      <td className="td-actions">
+                        {"inserat_url" in t && t.inserat_url ? (
+                          <a
+                            href={t.inserat_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="btn-pill btn-primary btn-table"
+                          >
+                            Inserat
+                          </a>
+                        ) : (
+                          "—"
+                        )}
+                      </td>
+                    ) : null}
                     <td className="td-actions">
                       {t.vergleich_url ? (
                         <a
