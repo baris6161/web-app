@@ -605,6 +605,20 @@ export default function DashboardClient() {
               {collapsed ? "Aufklappen" : "Einklappen"}
             </button>
           </div>
+          <div className="pagination-status-row">
+            {showNohand ? (
+              <span className="badge pagination-badge">
+                No-Hand: Seite {nohandMeta.page}/{nohandMeta.totalPages}, {nohandMeta.pageSize} pro Seite,{" "}
+                {nohandMeta.total} gesamt
+              </span>
+            ) : null}
+            {showManual ? (
+              <span className="badge pagination-badge">
+                Manuell: Seite {manualMeta.page}/{manualMeta.totalPages}, {manualMeta.pageSize} pro Seite,{" "}
+                {manualMeta.total} gesamt
+              </span>
+            ) : null}
+          </div>
           {collapsed ? (
             <p className="sub">Ergebnisliste eingeklappt.</p>
           ) : combinedFiltered.length === 0 ? (
