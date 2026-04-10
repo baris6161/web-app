@@ -31,3 +31,19 @@ export async function verifySessionToken(
     return false;
   }
 }
+
+export async function getSessionUsername(
+  token: string | undefined
+): Promise<string | null> {
+  if (!token) return null;
+  try {
+    const secret = new TextEncoder().encode(
+      process.env.SESSION_SECRET || "dev-insecure-change-me"
+    );
+    const { payload } = await jwtVerify(token, secret);
+    const sub = payload?.sub;
+    return typeof sub === "string" && sub.trim() ? sub.trim() : null;
+  } catch {
+    return null;
+  }
+}

@@ -12,18 +12,42 @@ export async function GET(req: NextRequest) {
     process.env.DASHBOARD_DEMO_TREFFER === "1" ||
     process.env.DASHBOARD_DEMO_TREFFER === "true";
   try {
+    const u = new URL(req.url);
+    const page = Math.max(1, Number(u.searchParams.get("page") || "1"));
+    const pageSize = Math.min(
+      100,
+      Math.max(10, Number(u.searchParams.get("pageSize") || "50"))
+    );
+    const from = (page - 1) * pageSize;
+    const to = from + pageSize - 1;
     const sb = supabaseAdmin();
-    const { data, error } = await sb
+    const { data, error, count } = await sb
       .from("nohand_web_treffer")
-      .select("*")
+      .select("*", { count: "exact" })
       .order("created_at", { ascending: false })
-      .limit(100);
+      .range(from, to);
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
+    const { data: lastRows } = await sb
+      .from("nohand_web_treffer")
+      .select("created_at")
+      .order("created_at", { ascending: false })
+      .limit(1);
     const fromDb = data || [];
     const treffer = demoOn ? [...getDemoTreffer(), ...fromDb] : fromDb;
-    return NextResponse.json({ treffer });
+    return NextResponse.json({
+      treffer,
+      meta: {
+        page,
+        pageSize,
+        total: count ?? 0,
+        totalPages: Math.max(1, Math.ceil((count ?? 0) / pageSize)),
+      },
+      health: {
+        lastInsertAt: (lastRows?.[0]?.created_at as string | undefined) ?? null,
+      },
+    });
   } catch (e) {
     const m = e instanceof Error ? e.message : "Fehler";
     return NextResponse.json({ error: m }, { status: 500 });
