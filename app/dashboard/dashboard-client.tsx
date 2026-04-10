@@ -64,6 +64,7 @@ function statusFromApiJson(sj: Record<string, unknown>): StatusPayload {
 
 export default function DashboardClient() {
   const router = useRouter();
+  const sessionStartRef = useRef<Date>(new Date());
   const [nohandTreffer, setNohandTreffer] = useState<TrefferRow[]>([]);
   const [manualTreffer, setManualTreffer] = useState<ManualTrefferRow[]>([]);
   const [collapsed, setCollapsed] = useState(false);
@@ -350,6 +351,37 @@ export default function DashboardClient() {
   }, [pcOk, status?.nohandOn]);
 
   const nohandChecked = status?.nohandOn === true;
+  const nohandStartStats = useMemo(() => {
+    const startTs = sessionStartRef.current.getTime();
+    let ok = 0;
+    let teuer = 0;
+    let fehler = 0;
+    for (const ent of logEntries) {
+      const ts = new Date(ent.created_at || "").getTime();
+      if (Number.isNaN(ts) || ts < startTs) continue;
+      const title = (ent.title || "").toLowerCase();
+      if (title.includes("kontakt-flow erfolgreich")) {
+        ok += 1;
+      } else if (title.includes("preisregel nicht erfüllt")) {
+        teuer += 1;
+      } else if (
+        title.includes("fehler") ||
+        title.includes("abgebrochen") ||
+        title.includes("nicht verfügbar")
+      ) {
+        fehler += 1;
+      }
+    }
+    return { ok, teuer, fehler };
+  }, [logEntries]);
+  const startTimeText = useMemo(
+    () =>
+      sessionStartRef.current.toLocaleTimeString("de-DE", {
+        hour: "2-digit",
+        minute: "2-digit",
+      }),
+    []
+  );
 
   return (
     <div className="shell shell-wide shell-dashboard">
@@ -777,6 +809,10 @@ export default function DashboardClient() {
               </button>
             </header>
             <div className="log-modal-scroll">
+              <div className="log-modal-summary">
+                Seit Start um {startTimeText} Uhr: {nohandStartStats.ok} angeschrieben -{" "}
+                {nohandStartStats.teuer} Schlechter Preis - {nohandStartStats.fehler} Fehler
+              </div>
               {logLoading ? (
                 <p className="treffer-meta">Laden …</p>
               ) : logErr ? (
