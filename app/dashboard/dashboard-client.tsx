@@ -810,8 +810,11 @@ export default function DashboardClient() {
             </header>
             <div className="log-modal-scroll">
               <div className="log-modal-summary">
-                Seit Start um {startTimeText} Uhr: {nohandStartStats.ok} angeschrieben -{" "}
-                {nohandStartStats.teuer} Schlechter Preis - {nohandStartStats.fehler} Fehler
+                <div>Seit Start um {startTimeText} Uhr:</div>
+                <div>
+                  {nohandStartStats.ok} Grün - {nohandStartStats.teuer} Rot -{" "}
+                  {nohandStartStats.fehler} Fehler
+                </div>
               </div>
               {logLoading ? (
                 <p className="treffer-meta">Laden …</p>
